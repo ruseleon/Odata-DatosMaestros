@@ -7,4 +7,6 @@ Pasos para copiar y pegar el código: <br>
 3.-Redefinir los métodos EntitySet <br>
 4.-Registrar el Servicio. <br>
  <br>
-No es un paso a paso para aprender OData, es un ejemplo de como obtener estos datos para una aplicacion web usando endpoints.
+No es un paso a paso para aprender OData, es un ejemplo de como obtener estos datos para una aplicacion web usando endpoints. <br>
+
+Con esta base puedes obtener adicional a estos catálogos datos maestros de clientes, centros de costos, etc.
