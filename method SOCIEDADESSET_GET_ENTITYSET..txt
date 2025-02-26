@@ -1,0 +1,52 @@
+  method SOCIEDADESSET_GET_ENTITYSET.
+
+
+       DATA: ls_filter_select_options TYPE /iwbep/s_mgw_select_option,
+          lt_select_options        TYPE /iwbep/t_cod_select_options,
+          ls_select_options        TYPE /iwbep/s_cod_select_option.
+
+    "select the record from DB
+    SELECT * FROM t001 AS A LEFT JOIN T001Z AS B
+      on a~bukrs = b~bukrs
+       INTO CORRESPONDING FIELDS OF TABLE @et_entityset
+      WHERE a~land1 = 'MX'
+      AND a~ktopl = 'GN01'
+      and b~party = 'MX_RFC'.
+
+
+    "Raise exception"
+
+    IF et_entityset IS INITIAL.
+      data: lo_message_container type ref to /iwbep/if_message_container,
+            lv_msg_text type bapi_msg.
+
+      lo_message_container = mo_context->get_message_container( ).
+
+      lv_msg_text = 'Sociedades no encontradas con los parametros solicitados'.
+
+      call METHOD lo_message_container->add_message_text_only
+        EXPORTING
+          iv_msg_type               = 'E'                  " Message Type - defined by GCS_MESSAGE_TYPE
+          iv_msg_text               = lv_msg_text       " Message Text
+
+        .
+      raise EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+        EXPORTING
+*          textid                 =
+*          previous               =
+          message_container      = lo_message_container
+*          http_status_code       =
+*          http_header_parameters =
+*          sap_note_id            =
+*          msg_code               =
+*          exception_category     =
+*          entity_type            =
+*          message                =
+*          message_unlimited      =
+*          filter_param           =
+*          operation_no           =
+      .
+
+    ENDIF.
+
+  endmethod.

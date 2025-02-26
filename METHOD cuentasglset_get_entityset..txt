@@ -1,0 +1,84 @@
+  METHOD cuentasglset_get_entityset.
+    "defino tablas para filtrar parametros
+    DATA: ls_filter_select_options TYPE /iwbep/s_mgw_select_option,
+          lt_select_options        TYPE /iwbep/t_cod_select_options,
+          ls_select_options        TYPE /iwbep/s_cod_select_option.
+
+  "defino rango para consultas
+    DATA:
+      r_bukrs  TYPE RANGE OF t001-bukrs,
+      ls_bukrs LIKE LINE OF r_bukrs.
+
+    READ TABLE it_filter_select_options INTO ls_filter_select_options WITH KEY property = 'Bukrs'.
+
+    IF ls_filter_select_options-property IS NOT INITIAL.
+
+      lt_select_options[] =  ls_filter_select_options-select_options[].
+    ENDIF.
+    
+    "asigno los parametros a un rango
+    LOOP AT lt_select_options INTO ls_select_options.
+
+      ls_bukrs-sign = ls_select_options-sign.
+      ls_bukrs-option = ls_select_options-option.
+      ls_bukrs-low = ls_select_options-low.
+      ls_bukrs-high = ls_select_options-high.
+      APPEND ls_bukrs TO r_bukrs.
+
+      CLEAR: ls_select_options, ls_bukrs.
+    ENDLOOP.
+
+    select
+      b~Bukrs,
+      b~Xspeb,
+      a~Ktopl,
+      b~Saknr,
+      a~Xspea,
+      a~Xspep,
+      c~Txt50
+
+       into CORRESPONDING FIELDS OF TABLE @et_entityset from ska1 as a LEFT join skb1 as b
+      on a~saknr = b~saknr
+      join skat as c on
+      a~saknr = c~saknr
+      where b~bukrs in @r_bukrs
+      and b~zuawa = '008'.
+
+
+           "Raise exception"
+
+    IF et_entityset IS INITIAL.
+      data: lo_message_container type ref to /iwbep/if_message_container,
+            lv_msg_text type bapi_msg.
+
+      lo_message_container = mo_context->get_message_container( ).
+
+      lv_msg_text = 'Cuentas no encontradas con los parametros solicitados'.
+
+      call METHOD lo_message_container->add_message_text_only
+        EXPORTING
+          iv_msg_type               = 'E'                  " Message Type - defined by GCS_MESSAGE_TYPE
+          iv_msg_text               = lv_msg_text       " Message Text
+
+        .
+      raise EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+        EXPORTING
+*          textid                 =
+*          previous               =
+          message_container      = lo_message_container
+*          http_status_code       =
+*          http_header_parameters =
+*          sap_note_id            =
+*          msg_code               =
+*          exception_category     =
+*          entity_type            =
+*          message                =
+*          message_unlimited      =
+*          filter_param           =
+*          operation_no           =
+      .
+
+    ENDIF.
+
+
+  ENDMETHOD.

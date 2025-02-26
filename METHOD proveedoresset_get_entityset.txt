@@ -1,0 +1,87 @@
+  METHOD proveedoresset_get_entityset.
+
+    DATA: ls_filter_select_options TYPE /iwbep/s_mgw_select_option,
+          lt_select_options        TYPE /iwbep/t_cod_select_options,
+          ls_select_options        TYPE /iwbep/s_cod_select_option.
+
+    DATA:
+      it_retenciones TYPE STANDARD TABLE OF  zte_retenciones,
+      it_txtcabecera TYPE STANDARD TABLE OF zte_txtcabecera,
+      ls_retenciones TYPE zte_retenciones,
+      it_t059z       TYPE STANDARD TABLE OF t059z,
+      ls_t059z       TYPE t059z.
+
+    FIELD-SYMBOLS: <fs_vendor> TYPE zst_vendors.
+
+    DATA:
+      r_bukrs  TYPE RANGE OF t001-bukrs,
+      ls_bukrs LIKE LINE OF r_bukrs.
+
+
+    "Read the select option
+    READ TABLE it_filter_select_options INTO ls_filter_select_options WITH KEY property = 'Bukrs'.
+
+    IF ls_filter_select_options-property IS NOT INITIAL.
+
+      lt_select_options[] =  ls_filter_select_options-select_options[].
+    ENDIF.
+
+    LOOP AT lt_select_options INTO ls_select_options.
+
+      ls_bukrs-sign = ls_select_options-sign.
+      ls_bukrs-option = ls_select_options-option.
+      ls_bukrs-low = ls_select_options-low.
+      ls_bukrs-high = ls_select_options-high.
+      APPEND ls_bukrs TO r_bukrs.
+
+      CLEAR: ls_select_options, ls_bukrs.
+    ENDLOOP.
+
+
+    SELECT
+          b~bukrs,
+          b~lifnr,
+          a~name1,
+          a~stcd1,
+          a~xcpdk
+
+        INTO CORRESPONDING FIELDS OF TABLE @et_entityset FROM  lfa1 AS a JOIN lfb1 AS b
+      ON a~lifnr = b~lifnr
+      WHERE b~bukrs IN @r_bukrs.
+
+
+    IF et_entityset IS INITIAL.
+      DATA: lo_message_container TYPE REF TO /iwbep/if_message_container,
+            lv_msg_text          TYPE bapi_msg.
+
+      lo_message_container = mo_context->get_message_container( ).
+
+      lv_msg_text = 'Proveedores no encontradas con los parametros solicitados'.
+
+      CALL METHOD lo_message_container->add_message_text_only
+        EXPORTING
+          iv_msg_type = 'E'                  " Message Type - defined by GCS_MESSAGE_TYPE
+          iv_msg_text = lv_msg_text.       " Message Text
+      RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
+        EXPORTING
+*         textid            =
+*         previous          =
+          message_container = lo_message_container
+*         http_status_code  =
+*         http_header_parameters =
+*         sap_note_id       =
+*         msg_code          =
+*         exception_category     =
+*         entity_type       =
+*         message           =
+*         message_unlimited =
+*         filter_param      =
+*         operation_no      =
+        .
+      else.
+
+
+
+   
+ ENDIF.
+  ENDMETHOD.
